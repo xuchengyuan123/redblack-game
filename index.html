@@ -95,6 +95,8 @@
   .btns button:disabled{opacity:.4;cursor:not-allowed}
   .reveal-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:700}
   .rb-red{background:var(--red);color:#fff} .rb-black{background:var(--black-l);color:#fff}
+  .reveal-badge.submitted{background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  .secret-note{background:#13202e;border:1px solid #28435c;color:#9ec9e8;border-radius:10px;padding:10px 14px;font-size:13.5px;margin-bottom:14px}
 
   .controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
   .controls button{padding:13px 22px;border-radius:11px;font-size:15px;font-weight:800;cursor:pointer;border:1px solid var(--line)}
@@ -216,6 +218,8 @@
     </div>
 
     <div class="board" id="board"></div>
+
+    <div class="secret-note hidden" id="secretNote">🔒 信息封闭：本轮各家出牌对他人保密，揭晓前不显示红/黑颜色，只看「✓ 已出牌」。</div>
 
     <div class="grid" id="grid"></div>
 
@@ -398,14 +402,18 @@ function renderGame(){
       dCls = delta>=0?"plus":"minus"; dTxt=(delta>=0?"+":"")+delta+" 分";
     }
     let badge="";
-    if(rev) badge = `<span class="reveal-badge ${ch==='red'?'rb-red':'rb-black'}">${ch==='red'?'红牌':'黑牌'}</span>`;
+    if(rev){
+      badge = `<span class="reveal-badge ${ch==='red'?'rb-red':'rb-black'}">${ch==='red'?'红牌':'黑牌'}</span>`;
+    } else if(ch){
+      badge = `<span class="reveal-badge submitted">✓ 已出牌</span>`;
+    }
     return `<div class="gcard ${rev?(ch==='red'?'revealed-red':'revealed-black'):''}">
       <div class="gname"><span>${esc(g.name)}</span>${badge}</div>
       <div class="gtotal">累计 <b>${g.score}</b></div>
       <div class="delta ${dCls}">${dTxt}</div>
       <div class="btns">
-        <button class="b-red ${ch==='red'?'sel':''}" ${rev?'disabled':''} data-id="${g.id}" data-c="red">红牌</button>
-        <button class="b-black ${ch==='black'?'sel':''}" ${rev?'disabled':''} data-id="${g.id}" data-c="black">黑牌</button>
+        <button class="b-red ${rev&&ch==='red'?'sel':''}" ${rev?'disabled':''} data-id="${g.id}" data-c="red">红牌</button>
+        <button class="b-black ${rev&&ch==='black'?'sel':''}" ${rev?'disabled':''} data-id="${g.id}" data-c="black">黑牌</button>
       </div>
     </div>`;
   }).join("");
@@ -421,6 +429,7 @@ function renderGame(){
   $("#revealBtn").classList.toggle("hidden", S.revealed);
   $("#nextBtn").classList.toggle("hidden", !S.revealed);
   $("#banner").classList.toggle("show", S.revealed);
+  $("#secretNote").classList.toggle("hidden", S.revealed);
 
   renderHistory();
 }
