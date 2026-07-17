@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>红黑博弈 · 信任与背叛的心理课</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1f2330; --line:#2a2f3d;
+    --text:#e8eaf0; --muted:#9aa3b2; --red:#e23b3b; --red-d:#b02a2a;
+    --black:#2b2f3a; --black-l:#3a4150; --gold:#f5c542; --green:#37c98b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.5; min-height:100vh;
+  }
+  a{color:var(--gold);text-decoration:none}
+  header{
+    position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;
+    padding:10px 16px;background:rgba(15,17,23,.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  header .logo{font-weight:800;font-size:17px;letter-spacing:.5px}
+  header .logo span{color:var(--red)}
+  header .spacer{flex:1}
+  header button,header a.btn{
+    background:var(--panel2);color:var(--text);border:1px solid var(--line);
+    padding:7px 13px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;
+  }
+  header button:hover,header a.btn:hover{border-color:var(--gold)}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+
+  /* ---------- Setup ---------- */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:18px}
+  .card h2{margin:0 0 4px;font-size:20px}
+  .card p.sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:7px}
+  .field input[type=number],.field input[type=text]{
+    width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    padding:11px 13px;border-radius:10px;font-size:15px;
+  }
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .row .field{flex:1;min-width:140px}
+  .groups-edit{display:flex;flex-direction:column;gap:8px}
+  .grp-input{display:flex;align-items:center;gap:8px}
+  .grp-input .dot{width:12px;height:12px;border-radius:50%;background:var(--gold)}
+  .grp-input input{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:9px 11px;border-radius:9px}
+  .primary{
+    background:linear-gradient(180deg,var(--red),var(--red-d));color:#fff;border:none;
+    padding:14px 26px;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;
+    box-shadow:0 6px 20px rgba(226,59,59,.35);width:100%;
+  }
+  .primary:active{transform:translateY(1px)}
+  .hint{font-size:12.5px;color:var(--muted);margin-top:10px}
+  .seg{display:flex;gap:8px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:120px;background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:12px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px}
+  .seg button.on{border-color:var(--gold);background:#23252f;color:var(--gold)}
+
+  /* ---------- Game ---------- */
+  .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .phase-chip{font-weight:800;padding:8px 16px;border-radius:999px;font-size:14px}
+  .phase-dark{background:#2a2138;color:#caa6ff;border:1px solid #4a3a66}
+  .phase-talk{background:#13314a;color:#7fc8ff;border:1px solid #2a5a82}
+  .round-info{font-size:15px;color:var(--muted)}
+  .round-info b{color:var(--text);font-size:18px}
+  .timer{margin-left:auto;font-variant-numeric:tabular-nums;font-size:14px;color:var(--muted)}
+  .timer b{color:var(--gold);font-size:20px}
+  .timer button{margin-left:8px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px}
+
+  .board{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .board .b{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+  .board .b .n{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .board .b .v{font-size:20px;font-weight:800;color:var(--gold)}
+  .board .b.lead{border-color:var(--gold)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:18px}
+  .gcard{background:var(--panel);border:2px solid var(--line);border-radius:var(--radius);padding:16px;transition:.2s}
+  .gcard.revealed-red{border-color:var(--red)}
+  .gcard.revealed-black{border-color:#5b6478}
+  .gcard .gname{font-weight:700;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+  .gcard .gtotal{font-size:13px;color:var(--muted)}
+  .gcard .gtotal b{color:var(--gold);font-size:16px}
+  .gcard .delta{font-size:13px;font-weight:700;margin:6px 0 12px;min-height:18px}
+  .delta.plus{color:var(--green)} .delta.minus{color:var(--red)}
+  .btns{display:flex;gap:9px}
+  .btns button{flex:1;padding:14px 0;border-radius:11px;font-size:16px;font-weight:800;cursor:pointer;border:2px solid transparent}
+  .b-red{background:var(--red);color:#fff}
+  .b-black{background:var(--black-l);color:#fff}
+  .btns button.sel{outline:3px solid var(--gold);outline-offset:1px}
+  .btns button:disabled{opacity:.4;cursor:not-allowed}
+  .reveal-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:700}
+  .rb-red{background:var(--red);color:#fff} .rb-black{background:var(--black-l);color:#fff}
+
+  .controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .controls button{padding:13px 22px;border-radius:11px;font-size:15px;font-weight:800;cursor:pointer;border:1px solid var(--line)}
+  .btn-reveal{background:linear-gradient(180deg,var(--gold),#d4a72f);color:#1a1300;border:none}
+  .btn-next{background:var(--panel2);color:var(--text)}
+  .btn-end{background:transparent;color:var(--muted)}
+
+  .banner{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--gold);
+    border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:15px;display:none}
+  .banner.show{display:block;animation:pop .35s ease}
+  @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+
+  .matrix{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:18px}
+  .matrix h3{margin:0 0 12px;font-size:15px;color:var(--muted)}
+  .mrow{display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+  .mrow .ic{width:18px;height:18px;border-radius:5px}
+  .mrow .lab{font-weight:700}
+  .mrow .desc{font-size:12.5px;color:var(--muted)}
+  .mrow .sc{font-weight:800;color:var(--gold);white-space:nowrap;font-size:14px}
+
+  .history{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .history h3{margin:0 0 10px;font-size:15px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600}
+  .pill{padding:1px 7px;border-radius:6px;font-weight:700;font-size:12px}
+  .pill.r{background:var(--red);color:#fff} .pill.b{background:var(--black-l);color:#fff}
+  .sc-plus{color:var(--green)} .sc-minus{color:var(--red)}
+
+  /* ---------- Reflection ---------- */
+  .lesson{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:16px}
+  .lesson h2{margin:0 0 6px;font-size:21px}
+  .lesson h3{color:var(--gold);margin:22px 0 8px;font-size:16px}
+  .lesson p{color:#d4d8e2;font-size:14.5px}
+  .lesson ul{color:#d4d8e2;font-size:14.5px;padding-left:20px;margin:6px 0}
+  .quote{border-left:3px solid var(--red);padding:6px 14px;color:var(--muted);font-style:italic;margin:12px 0;background:var(--panel2);border-radius:0 8px 8px 0}
+  .form-field{margin:14px 0}
+  .form-field label{display:block;font-weight:700;margin-bottom:6px;font-size:14px}
+  .form-field textarea,.form-field input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:12px;font-size:14px;font-family:inherit}
+  .form-field .note{font-size:12px;color:var(--muted);margin-top:5px}
+  .rank{list-style:none;padding:0;margin:10px 0}
+  .rank li{display:flex;justify-content:space-between;padding:11px 14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+  .rank li .pos{color:var(--gold);font-weight:800;margin-right:10px}
+  .rank li.win{border-color:var(--gold)}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--gold);color:#1a1300;padding:12px 20px;border-radius:10px;font-weight:700;opacity:0;transition:.3s;z-index:99}
+  .toast.show{opacity:1}
+  .center{text-align:center}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">红<span>黑</span>博弈</div>
+  <a class="btn" href="course.html">📖 课程讲义</a>
+  <div class="spacer"></div>
+  <button id="resetBtn">↺ 重新开始</button>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ SETUP ============ -->
+  <section id="setup">
+    <div class="card">
+      <h2>课前设置</h2>
+      <p class="sub">把全班分成若干小组（默认 5 组 × 10 人 = 50 人）。每轮每组集体商议后出一张「红牌」或「黑牌」，老师在本页录入，全班大屏实时看比分。</p>
+
+      <div class="row">
+        <div class="field">
+          <label>小组数量（建议 4–10 组）</label>
+          <input type="number" id="grpCount" value="5" min="2" max="12">
+        </div>
+        <div class="field">
+          <label>暗战局数（信息封闭）</label>
+          <input type="number" id="darkRounds" value="5" min="1" max="20">
+        </div>
+        <div class="field">
+          <label>谈判局数（开放沟通）</label>
+          <input type="number" id="talkRounds" value="5" min="0" max="20">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>小组命名（每组默认 10 人，可改成你们的分组名）</label>
+        <div class="groups-edit" id="groupsEdit"></div>
+      </div>
+
+      <button class="primary" id="startBtn">开始上课 ▶</button>
+      <p class="hint">提示：本课严格遵循课件「破冰与规则 → 博弈与观察 → 解析与反思 → 迁移与收束」四段流程。点右上角「课程讲义」可对照 PPT 逐页讲解。</p>
+    </div>
+
+    <div class="matrix">
+      <h3>得分表（每轮结算 · 源自课件第 5 页）</h3>
+      <div class="mrow"><span class="ic" style="background:#5b6478"></span>
+        <div><div class="lab">全黑共赢</div><div class="desc">所有小组都出黑牌，实现集体利益最大化</div></div>
+        <div class="sc">每组 +3</div></div>
+      <div class="mrow"><span class="ic" style="background:var(--red)"></span>
+        <div><div class="lab">单红独吞</div><div class="desc">唯一出红牌的小组得 5 分，出黑牌的「老实人」得 0 分</div></div>
+        <div class="sc">红 +5 / 黑 0</div></div>
+      <div class="mrow"><span class="ic" style="background:var(--red)"></span>
+        <div><div class="lab">多红互伤</div><div class="desc">两个及以上小组出红牌，则所有红牌组各得 1 分，黑牌组各得 3 分</div></div>
+        <div class="sc">红 +1 / 黑 +3</div></div>
+      <div class="mrow"><span class="ic" style="background:var(--red)"></span>
+        <div><div class="lab">全军覆没</div><div class="desc">所有小组都出红牌，则所有组都减 1 分</div></div>
+        <div class="sc">每组 −1</div></div>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="game" class="hidden">
+    <div class="topbar">
+      <span class="phase-chip" id="phaseChip">暗战</span>
+      <span class="round-info">第 <b id="roundNo">1</b> / <b id="totalRounds">10</b> 轮</span>
+      <span class="timer" id="timerBox">
+        <span id="timerLabel">外交时间</span> <b id="timerVal">--</b>
+        <button id="timerBtn">开始</button>
+      </span>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="banner" id="banner"></div>
+
+    <div class="controls">
+      <button class="btn-reveal" id="revealBtn">🔓 揭晓本轮</button>
+      <button class="btn-next hidden" id="nextBtn">下一轮 ▶</button>
+      <button class="btn-end" id="endBtn">结束并进入反思</button>
+    </div>
+
+    <div class="matrix">
+      <h3>得分表（每轮结算）</h3>
+      <div class="mrow"><span class="ic" style="background:#5b6478"></span>
+        <div><div class="lab">全黑共赢</div><div class="desc">所有小组都出黑牌</div></div><div class="sc">每组 +3</div></div>
+      <div class="mrow"><span class="ic" style="background:var(--red)"></span>
+        <div><div class="lab">单红独吞</div><div class="desc">仅 1 组出红牌</div></div><div class="sc">红 +5 / 黑 0</div></div>
+      <div class="mrow"><span class="ic" style="background:var(--red)"></span>
+        <div><div class="lab">多红互伤</div><div class="desc">≥2 组出红牌且有黑牌</div></div><div class="sc">红 +1 / 黑 +3</div></div>
+      <div class="mrow"><span class="ic" style="background:var(--red)"></span>
+        <div><div class="lab">全军覆没</div><div class="desc">全部出红牌</div></div><div class="sc">每组 −1</div></div>
+    </div>
+
+    <div class="history">
+      <h3>对局记录</h3>
+      <div id="historyEmpty" style="color:var(--muted);font-size:13px">尚未揭晓任何一轮。</div>
+      <table id="historyTable" class="hidden">
+        <thead><tr><th>轮</th><th>阶段</th><th>各组出牌</th><th>本轮得分</th><th>累计</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ REFLECTION ============ -->
+  <section id="reflection" class="hidden">
+    <div class="card">
+      <h2>🏆 最终战报</h2>
+      <p class="sub">信任与背叛的较量落下帷幕。下面把课堂体验连接到生活，并完成你自己的「合作清单」。</p>
+      <ol class="rank" id="rankList"></ol>
+    </div>
+
+    <div class="lesson">
+      <h2>解析与反思</h2>
+      <h3>信任成本：一次背叛需要三轮合作来偿还</h3>
+      <p>背叛的代价远超想象。它不仅损害集体利益，更在长期关系中埋下不信任的种子。</p>
+      <ul>
+        <li>短期收益 → 信任崩塌：受害组转红，集体受损，总分下滑。</li>
+        <li>即便后续真诚合作，对方仍倾向<b>防御性红牌</b>。修复信任，道阻且长。</li>
+      </ul>
+
+      <h3>生活副本：小组作业里的红黑牌幽灵</h3>
+      <p>囚徒困境无处不在。把课堂策略，迁移到我们的生活：</p>
+      <ul>
+        <li><b>困境：搭便车</b> — 总有人想不劳而获，享受集体成果。<br>策略：提前约定惩罚，公开分工与进度。</li>
+        <li><b>困境：公共区卫生</b> — 都希望别人打扫，结果环境越来越差。<br>策略：制定值日表，引入互评机制，将一次性博弈变为重复博弈。</li>
+      </ul>
+
+      <h3>课程收关：把背叛的教训写成合作清单</h3>
+      <div class="quote">红牌易得，信任难建。<br>一次背叛的代价高昂。<br>沟通缩短博弈距离，制度固化合作收益。<br>短期诱惑永远存在，但长期共赢需要主动克制。</div>
+
+      <div class="form-field">
+        <label>下次遇到困境，我能率先做出的可信承诺是：</label>
+        <input type="text" id="promiseInput" placeholder="例如：我承诺先出黑牌，并把进度公开给组员……">
+      </div>
+      <div class="form-field">
+        <label>我给到的合作建议是：</label>
+        <textarea id="adviceInput" rows="3" placeholder="写一句你想对同学说的合作建议……"></textarea>
+        <div class="note">这份反思只保存在你自己的设备上（本地浏览器），不会上传。写完后可以截图分享。</div>
+      </div>
+      <button class="primary" id="saveReflect" style="width:auto;padding:12px 24px">💾 保存我的反思</button>
+    </div>
+
+    <footer>红黑博弈 · 信任与背叛的心理课 — 一份可带进课堂的沉浸式课件</footer>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const STORE = "redblack_game_v1";
+
+let S = null; // state
+
+function defaultNames(n){
+  const arr=[]; for(let i=1;i<=n;i++) arr.push("第"+numCn(i)+"组");
+  return arr;
+}
+function numCn(i){const m=["零","一","二","三","四","五","六","七","八","九","十","十一","十二"];return m[i]||i;}
+
+/* ---------- Setup UI ---------- */
+function renderGroupsEdit(){
+  const n = parseInt($("#grpCount").value)||5;
+  const box = $("#groupsEdit"); box.innerHTML="";
+  const cur = S && S._setupNames ? S._setupNames : defaultNames(n);
+  for(let i=0;i<n;i++){
+    const d=document.createElement("div"); d.className="grp-input";
+    d.innerHTML=`<span class="dot"></span><input value="${(cur[i]||defaultNames(n)[i]).replace(/"/g,'&quot;')}" data-i="${i}">`;
+    box.appendChild(d);
+  }
+}
+$("#grpCount").addEventListener("input", renderGroupsEdit);
+
+/* ---------- State ---------- */
+function newState(){
+  const n = Math.max(2, Math.min(12, parseInt($("#grpCount").value)||5));
+  const dark = Math.max(1, parseInt($("#darkRounds").value)||5);
+  const talk = Math.max(0, parseInt($("#talkRounds").value)||5);
+  const names=[];
+  document.querySelectorAll("#groupsEdit input").forEach(inp=>names[+inp.dataset.i]=inp.value.trim()||defaultNames(n)[+inp.dataset.i]);
+  while(names.length<n) names.push(defaultNames(n)[names.length]);
+  S = {
+    groups: names.map((nm,i)=>({id:i,name:nm,score:0})),
+    dark, talk, total: dark+talk,
+    round:1, revealed:false,
+    choices:{}, // id -> 'red'|'black'
+    history:[],
+    finished:false
+  };
+  save();
+}
+function save(){ try{localStorage.setItem(STORE, JSON.stringify(S));}catch(e){} }
+function load(){ try{const r=localStorage.getItem(STORE); return r?JSON.parse(r):null;}catch(e){return null;} }
+
+/* ---------- Scoring ---------- */
+function computeScores(choices){
+  const ids = S.groups.map(g=>g.id);
+  let r=0; ids.forEach(id=>{ if(choices[id]==="red") r++; });
+  const n = ids.length;
+  const sc = {};
+  ids.forEach(id=>{
+    const isRed = choices[id]==="red";
+    let v;
+    if(r===0) v=3;
+    else if(r===1) v = isRed?5:0;
+    else if(r===n) v=-1;
+    else v = isRed?1:3; // r>=2 and there is black
+    sc[id]=v;
+  });
+  return {sc, r, n};
+}
+function bannerText(r,n){
+  if(r===0) return {t:"🤝 全黑共赢！所有小组各 +3，集体利益最大化。", c:"var(--green)"};
+  if(r===1) return {t:"🔥 单红独吞！唯一出红牌的小组 +5，其余黑牌组得 0。", c:"var(--red)"};
+  if(r===n) return {t:"💥 全军覆没！所有小组出红牌，各组各 −1。", c:"var(--red)"};
+  return {t:"⚔️ 多红互伤！红牌组各 +1，黑牌组各 +3。", c:"var(--gold)"};
+}
+function phaseOf(round){
+  return round<=S.dark ? "dark" : "talk";
+}
+
+/* ---------- Render game ---------- */
+function show(view){
+  ["setup","game","reflection"].forEach(v=>$("#"+v).classList.toggle("hidden", v!==view));
+}
+function renderGame(){
+  const phase = phaseOf(S.round);
+  $("#phaseChip").textContent = phase==="dark"?"暗战（信息封闭）":"谈判（开放沟通）";
+  $("#phaseChip").className = "phase-chip "+(phase==="dark"?"phase-dark":"phase-talk");
+  $("#roundNo").textContent = S.round;
+  $("#totalRounds").textContent = S.total;
+
+  // board
+  const max = Math.max(0, ...S.groups.map(g=>g.score));
+  const lead = S.groups.filter(g=>g.score===max && max>0).map(g=>g.id);
+  $("#board").innerHTML = S.groups.map(g=>`
+    <div class="b ${lead.includes(g.id)?'lead':''}">
+      <div class="n">${esc(g.name)}</div><div class="v">${g.score}</div>
+    </div>`).join("");
+
+  // grid
+  $("#grid").innerHTML = S.groups.map(g=>{
+    const ch = S.choices[g.id];
+    const rev = S.revealed;
+    const delta = rev ? S._lastDelta ? S._lastDelta[g.id] : null : null;
+    let dCls="", dTxt="";
+    if(rev && delta!==null){
+      dCls = delta>=0?"plus":"minus"; dTxt=(delta>=0?"+":"")+delta+" 分";
+    }
+    let badge="";
+    if(rev) badge = `<span class="reveal-badge ${ch==='red'?'rb-red':'rb-black'}">${ch==='red'?'红牌':'黑牌'}</span>`;
+    return `<div class="gcard ${rev?(ch==='red'?'revealed-red':'revealed-black'):''}">
+      <div class="gname"><span>${esc(g.name)}</span>${badge}</div>
+      <div class="gtotal">累计 <b>${g.score}</b></div>
+      <div class="delta ${dCls}">${dTxt}</div>
+      <div class="btns">
+        <button class="b-red ${ch==='red'?'sel':''}" ${rev?'disabled':''} data-id="${g.id}" data-c="red">红牌</button>
+        <button class="b-black ${ch==='black'?'sel':''}" ${rev?'disabled':''} data-id="${g.id}" data-c="black">黑牌</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  $("#grid").querySelectorAll("button[data-c]").forEach(b=>{
+    b.addEventListener("click",()=>{ if(S.revealed) return;
+      const id=+b.dataset.id, c=b.dataset.c;
+      S.choices[id]=c; save(); renderGame();
+    });
+  });
+
+  // controls
+  $("#revealBtn").classList.toggle("hidden", S.revealed);
+  $("#nextBtn").classList.toggle("hidden", !S.revealed);
+  $("#banner").classList.toggle("show", S.revealed);
+
+  renderHistory();
+}
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+function renderHistory(){
+  if(!S.history.length){ $("#historyEmpty").classList.remove("hidden"); $("#historyTable").classList.add("hidden"); return; }
+  $("#historyEmpty").classList.add("hidden"); $("#historyTable").classList.remove("hidden");
+  const cum={}; S.groups.forEach(g=>cum[g.id]=0);
+  $("#historyBody").innerHTML = S.history.map(h=>{
+    const cells = S.groups.map(g=>{
+      const c=h.choices[g.id]; const d=h.scores[g.id];
+      const cls = d>=0?"sc-plus":"sc-minus";
+      return {pill:`<span class="pill ${c==='red'?'r':'b'}">${c==='red'?'红':'黑'}</span>`, delta:`<span class="${cls}">${d>=0?'+':''}${d}</span>`};
+    });
+    const pills = cells.map(x=>x.pill).join("<br>");
+    const deltas = cells.map(x=>x.delta).join("<br>");
+    let acc=""; S.groups.forEach(g=>{cum[g.id]+=h.scores[g.id];});
+    const accCells = S.groups.map(g=>`<b>${cum[g.id]}</b>`).join("<br>");
+    return `<tr><td>${h.round}</td><td>${h.phase==='dark'?'暗战':'谈判'}</td><td style="text-align:left">${pills}</td><td style="text-align:left">${deltas}</td><td style="text-align:left">${accCells}</td></tr>`;
+  }).join("");
+}
+
+/* ---------- Actions ---------- */
+$("#revealBtn").addEventListener("click",()=>{
+  const allPicked = S.groups.every(g=>S.choices[g.id]);
+  if(!allPicked){
+    toast("请让所有小组先出牌（点击红牌/黑牌）再揭晓"); return;
+  }
+  const {sc,r,n} = computeScores(S.choices);
+  S._lastDelta = {};
+  S.groups.forEach(g=>{ S._lastDelta[g.id]=sc[g.id]; g.score+=sc[g.id]; });
+  const b = bannerText(r,n);
+  const loneRed = r===1 ? S.groups.find(g=>S.choices[g.id]==="red") : null;
+  let msg = b.t;
+  if(loneRed) msg = `🔥 单红独吞！${loneRed.name} 出红牌得 +5，其余黑牌组得 0。`;
+  $("#banner").innerHTML = `<b style="color:${b.c}">第 ${S.round} 轮结果</b><br>${msg}`;
+  S.history.push({round:S.round, phase:phaseOf(S.round), choices:{...S.choices}, scores:{...sc}});
+  S.revealed = true;
+  stopTimer();
+  save(); renderGame();
+});
+
+$("#nextBtn").addEventListener("click",()=>{
+  if(S.round >= S.total){ endGame(); return; }
+  S.round++; S.revealed=false; S.choices={}; S._lastDelta=null;
+  save(); renderGame();
+});
+
+$("#endBtn").addEventListener("click",()=>{
+  if(!confirm("确定结束游戏并进入反思环节吗？")) return;
+  endGame();
+});
+
+function endGame(){
+  S.finished=true; save(); show("reflection"); renderReflection();
+}
+
+function renderReflection(){
+  const sorted=[...S.groups].sort((a,b)=>b.score-a.score);
+  const max=sorted[0].score;
+  $("#rankList").innerHTML = sorted.map((g,i)=>`
+    <li class="${g.score===max?'win':''}"><span><span class="pos">${i+1}</span>${esc(g.name)}</span><b style="color:var(--gold)">${g.score} 分</b></li>`).join("");
+  // restore reflection if saved
+  try{const r=JSON.parse(localStorage.getItem(STORE+"_reflect")||"{}");
+    if(r.promise) $("#promiseInput").value=r.promise;
+    if(r.advice) $("#adviceInput").value=r.advice;
+  }catch(e){}
+}
+$("#saveReflect").addEventListener("click",()=>{
+  localStorage.setItem(STORE+"_reflect", JSON.stringify({promise:$("#promiseInput").value, advice:$("#adviceInput").value}));
+  toast("已保存到本设备 ✓");
+});
+
+/* ---------- Timer (谈判外交时间) ---------- */
+let timerInt=null, timerLeft=0;
+function fmt(s){const m=Math.floor(s/60),ss=s%60;return (m<10?"0":"")+m+":"+(ss<10?"0":"")+ss;}
+$("#timerBtn").addEventListener("click",()=>{
+  if(timerInt){ stopTimer(); return; }
+  if(timerLeft<=0) timerLeft = phaseOf(S.round)==="talk"?90:30;
+  $("#timerBtn").textContent="暂停";
+  timerInt=setInterval(()=>{
+    timerLeft--; $("#timerVal").textContent=fmt(timerLeft);
+    if(timerLeft<=0){ stopTimer(); toast("时间到！请各组亮牌。"); }
+  },1000);
+  $("#timerVal").textContent=fmt(timerLeft);
+});
+function stopTimer(){ if(timerInt){clearInterval(timerInt);timerInt=null;} $("#timerBtn").textContent="开始"; }
+
+/* ---------- Reset ---------- */
+$("#resetBtn").addEventListener("click",()=>{
+  if(!confirm("确定清空当前游戏、回到设置页吗？（已保存的比分会丢失）")) return;
+  localStorage.removeItem(STORE); localStorage.removeItem(STORE+"_reflect");
+  S=null; show("setup"); renderGroupsEdit();
+});
+
+/* ---------- Toast ---------- */
+let toastT=null;
+function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show");
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2200); }
+
+/* ---------- Boot ---------- */
+const saved = load();
+if(saved && saved.groups && saved.groups.length && !saved.finished){
+  S=saved; show("game"); renderGame();
+} else if(saved && saved.finished){
+  S=saved; show("reflection"); renderReflection();
+} else {
+  show("setup"); renderGroupsEdit();
+}
+$("#startBtn").addEventListener("click",()=>{ newState(); show("game"); renderGame(); });
+</script>
+</body>
+</html>

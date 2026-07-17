@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>红黑博弈 · 课程讲义</title>
+<style>
+  :root{--bg:#0f1117;--panel:#171a23;--line:#2a2f3d;--text:#e8eaf0;--muted:#9aa3b2;--red:#e23b3b;--gold:#f5c542}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
+  header{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:10px 16px;background:rgba(15,17,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  header .logo{font-weight:800;font-size:17px} header .logo span{color:var(--red)}
+  header .spacer{flex:1}
+  header a.btn{background:#1f2330;color:var(--text);border:1px solid var(--line);padding:7px 13px;border-radius:10px;font-size:13px;font-weight:600}
+  header a.btn:hover{border-color:var(--gold)}
+  .wrap{max-width:820px;margin:0 auto;padding:26px 18px 70px}
+  .hero{text-align:center;padding:30px 0 10px}
+  .hero h1{font-size:30px;margin:0 0 6px}
+  .hero p{color:var(--muted);margin:0}
+  .parts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:22px 0}
+  .parts .p{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:13px;color:var(--muted)}
+  .block{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;margin:18px 0}
+  .block .tag{display:inline-block;font-size:12px;font-weight:700;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:3px 10px;margin-bottom:10px}
+  .block h2{margin:0 0 10px;font-size:22px}
+  .block h3{color:var(--gold);margin:18px 0 6px;font-size:16px}
+  .block p{color:#d4d8e2;font-size:15px}
+  .block ul{color:#d4d8e2;font-size:15px;padding-left:22px}
+  .quote{border-left:3px solid var(--red);padding:8px 16px;color:var(--muted);font-style:italic;margin:14px 0;background:#1f2330;border-radius:0 8px 8px 0}
+  .matrix{display:grid;gap:10px;margin-top:12px}
+  .mrow{display:grid;grid-template-columns:20px 1fr auto;gap:12px;align-items:center;background:#1f2330;border:1px solid var(--line);border-radius:10px;padding:12px}
+  .mrow .ic{width:20px;height:20px;border-radius:6px}
+  .mrow .lab{font-weight:700} .mrow .desc{font-size:13px;color:var(--muted)}
+  .mrow .sc{font-weight:800;color:var(--gold);white-space:nowrap}
+  .cta{text-align:center;margin:30px 0}
+  .cta a{display:inline-block;background:linear-gradient(180deg,var(--red),#b02a2a);color:#fff;padding:14px 30px;border-radius:12px;font-weight:800;font-size:16px;box-shadow:0 6px 20px rgba(226,59,59,.35)}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">红<span>黑</span>博弈</div>
+  <div class="spacer"></div>
+  <a class="btn" href="index.html">▶ 进入游戏</a>
+</header>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>红黑博弈：信任与背叛的心理课</h1>
+    <p>一份可带进课堂的沉浸式课件 · 逐页对照讲义</p>
+  </div>
+
+  <div class="parts">
+    <div class="p">① 破冰与规则</div>
+    <div class="p">② 博弈与观察</div>
+    <div class="p">③ 解析与反思</div>
+    <div class="p">④ 迁移与收束</div>
+  </div>
+
+  <div class="block">
+    <span class="tag">破冰</span>
+    <h2>如果和同学组队比赛</h2>
+    <p>对方可能偷偷耍小聪明得分，你会选择<span style="color:var(--gold)">「合作帮大家赢」</span>还是<span style="color:var(--red)">「自私保自己」</span>？</p>
+  </div>
+
+  <div class="block">
+    <span class="tag">导语</span>
+    <h2>红黑博弈 · 信任与背叛的心理战场</h2>
+    <p>生活充满了「合作还是背叛」的两难。本课将通过一场沉浸式卡牌游戏，让你亲身体验<b>个人利益与集体利益的激烈冲突</b>，感受信任的重量与背叛的代价。</p>
+    <ul>
+      <li><b>分组博弈</b> — 全班分成若干小组，每组集体出牌</li>
+      <li><b>策略对决</b> — 在合作与背叛之间反复权衡</li>
+      <li><b>心理洞察</b> — 看见自己与他人在利益前的选择</li>
+    </ul>
+  </div>
+
+  <div class="block">
+    <span class="tag">机制</span>
+    <h2>游戏机制：得分表决定命运</h2>
+    <p>每一轮，你的选择都将影响团队的命运。选择合作（黑牌）还是竞争（红牌）？</p>
+    <div class="matrix">
+      <div class="mrow"><span class="ic" style="background:#5b6478"></span>
+        <div><div class="lab">全黑共赢</div><div class="desc">所有小组都出黑牌，实现集体利益最大化</div></div><div class="sc">每组 +3</div></div>
+      <div class="mrow"><span class="ic" style="background:var(--red)"></span>
+        <div><div class="lab">单红独吞</div><div class="desc">唯一出红牌的小组得 5 分，出黑牌的「老实人」得 0 分</div></div><div class="sc">红 +5 / 黑 0</div></div>
+      <div class="mrow"><span class="ic" style="background:var(--red)"></span>
+        <div><div class="lab">多红互伤</div><div class="desc">两个及以上小组出红牌，则所有红牌组各得 1 分，黑牌组各得 3 分</div></div><div class="sc">红 +1 / 黑 +3</div></div>
+      <div class="mrow"><span class="ic" style="background:var(--red)"></span>
+        <div><div class="lab">全军覆没</div><div class="desc">所有小组出红牌，则所有组都减 1 分</div></div><div class="sc">每组 −1</div></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <span class="tag">第一阶段</span>
+    <h2>暗战 5 局（信息封闭）</h2>
+    <p>要求：组内秘密讨论后出牌，<b>不和其他小组沟通</b>。在信息的黑暗中，信任如何产生，又如何被试探？</p>
+  </div>
+
+  <div class="block">
+    <span class="tag">第二阶段</span>
+    <h2>谈判 5 局（开放沟通）</h2>
+    <p>增加「外交」时间，代表可以串访、承诺「我们都出黑」。语言，是建立信任的桥梁，还是背叛的工具？</p>
+    <div class="quote">为什么沟通后有人更信任，有人更警惕？——「承诺的重量」</div>
+  </div>
+
+  <div class="block">
+    <span class="tag">观察</span>
+    <h2>五轮暗战：从默契到试探的裂变</h2>
+    <ul>
+      <li><b>第一轮：天真的默契</b> — 多数小组选择全黑，为集体利益而惊喜。</li>
+      <li><b>背叛的涟漪</b> — 一旦出现单红，受害组愤怒，信任开始崩塌。</li>
+      <li><b>防御性竞争</b> — 为避免被利用，更多小组转向红牌，陷入「多红互伤」陷阱。</li>
+    </ul>
+  </div>
+
+  <div class="block">
+    <span class="tag">观察</span>
+    <h2>中场谈判：语言如何重塑利益天平</h2>
+    <h3>沟通的策略</h3>
+    <ul>
+      <li>小组代表串访，寻求联盟</li>
+      <li>口头承诺与私下协议</li>
+      <li>公开表态与威慑威胁</li>
+    </ul>
+    <h3>沟通的影响</h3>
+    <ul>
+      <li>信息流通提升合作概率</li>
+      <li>但承诺的兑现率参差不齐</li>
+      <li>背叛变得更容易，也更伤人</li>
+      <li>沟通本身成为一种博弈策略</li>
+    </ul>
+  </div>
+
+  <div class="block">
+    <span class="tag">解析</span>
+    <h2>信任成本：一次背叛需要三轮合作来偿还</h2>
+    <p>背叛的代价远超想象。它不仅损害集体利益，更在长期关系中埋下不信任的种子。</p>
+    <p>短期收益 → 信任崩塌（受害组转红）→ 集体受损、总分下滑。即便后续真诚合作，对方仍倾向<b>防御性红牌</b>。修复信任，道阻且长。</p>
+  </div>
+
+  <div class="block">
+    <span class="tag">迁移</span>
+    <h2>生活副本：小组作业里的红黑牌幽灵</h2>
+    <p>囚徒困境无处不在。把课堂策略，迁移到我们的生活：</p>
+    <h3>困境：搭便车</h3>
+    <p>总有人想不劳而获，享受集体成果。<br>策略：提前约定惩罚，公开分工与进度。</p>
+    <h3>困境：公共区卫生</h3>
+    <p>都希望别人打扫，结果环境越来越差。<br>策略：制定值日表，引入互评机制，将一次性博弈变为重复博弈。</p>
+  </div>
+
+  <div class="block">
+    <span class="tag">收关</span>
+    <h2>课程收关：把背叛的教训写成合作清单</h2>
+    <div class="quote">红牌易得，信任难建。<br>一次背叛的代价高昂。<br>沟通缩短博弈距离，制度固化合作收益。<br>短期诱惑永远存在，但长期共赢需要主动克制。</div>
+    <p><b>我的合作建议</b>：下次遇到困境，我能率先做出的可信承诺是 ______ ；我给到的合作建议是 ______ 。</p>
+  </div>
+
+  <div class="cta">
+    <a href="index.html">▶ 打开游戏大屏，开始上课</a>
+  </div>
+
+  <footer>红黑博弈 · 信任与背叛的心理课 — 沉浸式课件</footer>
+</div>
+</body>
+</html>
