@@ -58,16 +58,6 @@ python -m http.server 8000
 
 ---
 
-## 五、部署到 GitHub Pages（你自己操作，AI 不推送）
-
-> 按我们约定，文件只改在本地，由你本人上传 / 部署。步骤如下：
-
-1. 登录 GitHub（账号 `xuchengyuan123`），新建一个仓库，例如 `redblack-game`。
-2. 把本目录里的 **`index.html`、`course.html`、`README.md`** 三个文件上传到仓库根目录（可直接拖拽，或用 Web 端 Upload files）。
-3. 进入仓库 **Settings → Pages**，Source 选 **Deploy from a branch**，分支选 **main**（或 master），目录选 **/ (root)**，保存。
-4. 等待一两分钟，访问 `https://<你的用户名>.github.io/redblack-game/` 即可。全班用手机/电脑打开这个链接就能看讲义；大屏游戏由老师在本机打开运行。
-
-> 提示：GitHub Pages 是静态托管，**不需要实名认证**，适合你直接使用。
 
 ---
 
